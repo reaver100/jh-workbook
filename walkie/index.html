@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<!-- This site is hosted on Netlify. Anyone can build and deploy a site
+     like this one for free: https://netlify.new/?utm_campaign=loops&utm_source=ai-legible&utm_medium=owned&utm_content=comment&utm_id=f476f473-d3d7-4734-9b8c-b6c5779f112f
+     Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0d1117">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="무전기">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>무전기</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --line:#262d36;
+    --txt:#e6edf3; --dim:#8b949e;
+    --accent:#2f81f7; --live:#f85149; --ok:#3fb950; --warn:#d29922;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{height:100%; overscroll-behavior:none}
+  body{
+    margin:0; background:var(--bg); color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
+    display:flex; flex-direction:column;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    overflow:hidden; user-select:none; -webkit-user-select:none;
+  }
+  header{
+    padding:12px 16px; border-bottom:1px solid var(--line);
+    display:flex; align-items:center; gap:10px; flex:none;
+  }
+  header h1{font-size:16px; margin:0; font-weight:700; letter-spacing:-.3px}
+  .pill{
+    margin-left:auto; font-size:12px; color:var(--dim);
+    border:1px solid var(--line); border-radius:999px; padding:4px 10px; white-space:nowrap;
+  }
+  .pill b{color:var(--txt); font-weight:600}
+  main{flex:1; display:flex; flex-direction:column; min-height:0}
+
+  /* 접속 화면 */
+  #setup{padding:24px 20px; display:flex; flex-direction:column; gap:14px; overflow-y:auto}
+  label{font-size:13px; color:var(--dim); display:block; margin-bottom:6px}
+  input{
+    width:100%; padding:14px; font-size:16px; border-radius:12px;
+    border:1px solid var(--line); background:var(--panel); color:var(--txt);
+  }
+  input:focus{outline:none; border-color:var(--accent)}
+  .primary{
+    width:100%; padding:16px; font-size:16px; font-weight:700; border:0; border-radius:12px;
+    background:var(--accent); color:#fff; margin-top:4px;
+  }
+  .primary:disabled{opacity:.5}
+  .hint{font-size:12px; color:var(--dim); line-height:1.7}
+  .hint b{color:var(--txt)}
+  #install{
+    display:none; padding:12px 14px; border:1px solid var(--accent); border-radius:12px;
+    background:rgba(47,129,247,.1); font-size:13px; line-height:1.6;
+  }
+  #install button{
+    margin-top:8px; padding:10px 16px; border:0; border-radius:9px;
+    background:var(--accent); color:#fff; font-size:14px; font-weight:600;
+  }
+
+  /* 통신 화면 */
+  #live{display:none; flex:1; flex-direction:column; min-height:0}
+  #roster{flex:1; overflow-y:auto; padding:10px 14px; display:flex; flex-direction:column; gap:8px}
+  .row{
+    display:flex; align-items:center; gap:10px; padding:12px 14px;
+    border:1px solid var(--line); border-radius:12px; background:var(--panel);
+  }
+  .row.sel{border-color:var(--accent); background:rgba(47,129,247,.12)}
+  .row.on{border-color:var(--live)}
+  .row.off{opacity:.55; border-style:dashed}
+  .row.off .nm{font-weight:500}
+  .dot{width:9px; height:9px; border-radius:50%; background:var(--dim); flex:none}
+  .dot.up{background:var(--ok)}
+  .dot.tx{background:var(--live); animation:blink .7s infinite}
+  @keyframes blink{50%{opacity:.25}}
+  .nm{font-size:15px; font-weight:600}
+  .sub{margin-left:auto; font-size:12px; color:var(--dim)}
+  .sub.hot{color:var(--live); font-weight:700}
+
+  #pad{flex:none; padding:10px 16px 20px; border-top:1px solid var(--line)}
+  #tgt{font-size:13px; text-align:center; color:var(--dim); margin-bottom:10px; min-height:18px}
+  #tgt b{color:var(--accent)}
+  #ptt{
+    width:100%; height:120px; border:0; border-radius:20px; font-size:19px; font-weight:800;
+    background:linear-gradient(180deg,#2f81f7,#1f6feb); color:#fff; letter-spacing:-.3px;
+    touch-action:none; transition:transform .06s;
+  }
+  #ptt.down{background:linear-gradient(180deg,#f85149,#da3633); transform:scale(.98)}
+  #ptt:disabled{opacity:.45}
+  .bar{display:flex; gap:8px; margin-top:10px}
+  .bar button{
+    flex:1; padding:11px; border:1px solid var(--line); border-radius:11px;
+    background:var(--panel); color:var(--dim); font-size:13px; font-weight:600;
+  }
+  .bar button.danger{color:var(--live); border-color:rgba(248,81,73,.4)}
+  .bar button.call{color:var(--ok); border-color:rgba(63,185,80,.45)}
+  #push{
+    display:flex; align-items:center; gap:10px; padding:12px 14px;
+    border:1px solid var(--line); border-radius:12px; background:var(--panel); font-size:13px;
+  }
+  #push b{color:var(--txt)}
+  #push span{color:var(--dim); line-height:1.5}
+  #push button{
+    margin-left:auto; flex:none; padding:9px 14px; border:0; border-radius:9px;
+    background:var(--accent); color:#fff; font-size:13px; font-weight:600;
+  }
+  #push.on button{background:#21262d; color:var(--ok)}
+
+  #ringbar{position:fixed;left:12px;right:12px;bottom:18px;z-index:60;display:none;
+  align-items:center;gap:10px;background:#b4232a;color:#fff;border-radius:14px;
+  padding:12px 14px;box-shadow:0 10px 28px rgba(0,0,0,.45);font-size:15px;font-weight:700}
+#ringbar span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#ringbar button{flex:0 0 auto;background:#fff;color:#b4232a;border:0;border-radius:10px;
+  padding:10px 14px;font-size:15px;font-weight:800}
+#toast{
+    position:fixed; left:50%; bottom:170px; transform:translateX(-50%);
+    background:#1f2731; border:1px solid var(--line); color:var(--txt);
+    padding:11px 16px; border-radius:11px; font-size:13.5px; max-width:86%;
+    text-align:center; opacity:0; transition:opacity .25s; pointer-events:none; z-index:50;
+  }
+  #toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>무전기</h1>
+  <span class="pill" id="pill">대기 중</span>
+</header>
+
+<main>
+  <section id="setup">
+    <div id="install">
+      <b>홈 화면에 추가하면 앱처럼 쓸 수 있습니다.</b><br>
+      주소창 없이 전체 화면으로 열립니다.
+      <br><button id="installBtn">홈 화면에 추가</button>
+    </div>
+
+    <div>
+      <label for="nm">내 이름 (가족끼리 서로 다르게)</label>
+      <input id="nm" type="text" autocomplete="off" placeholder="아빠">
+    </div>
+    <button class="primary" id="join">접속하기</button>
+
+    <div id="push">
+      <span><b>꺼져 있어도 호출 받기</b><br>알림을 켜두면 앱이 닫혀 있어도 울립니다</span>
+      <button id="pushBtn">알림 켜기</button>
+    </div>
+
+    <div class="hint">
+      · 채널은 <b>our-family</b> 로 고정되어 있습니다.<br>
+      · 처음 접속할 때 <b>마이크 권한</b>을 허용해 주세요.<br>
+      · 같은 공간에서 쓸 때는 하울링 방지를 위해 <b>이어폰</b>을 권장합니다.<br>
+      · 접속 중에는 화면이 자동으로 꺼지지 않습니다.<br>
+      · 최대 8명까지 들어올 수 있습니다.
+    </div>
+  </section>
+
+  <section id="live">
+    <div id="roster"></div>
+    <div id="pad">
+      <div id="tgt"></div>
+      <button id="ptt" disabled>누르고 말하기</button>
+      <div class="bar">
+        <button id="leave" class="danger">나가기</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="toast"></div>
+<audio id="sink" autoplay playsinline></audio>
+
+<script src="peerjs.min.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  var SLOTS = 8, NS = "jhwt", CHANNEL = "our-family";
+  var $ = function(id){ return document.getElementById(id); };
+  var setup=$("setup"), live=$("live"), pill=$("pill"), roster=$("roster"),
+      ptt=$("ptt"), tgtEl=$("tgt"), joinBtn=$("join"), nmEl=$("nm");
+
+  var peer=null, mySlot=0, channel=CHANNEL, myName="";
+  var micStream=null, micTrack=null;
+  var conns={}, pending={}, calls={}, clones={}, names={}, talking={}, dmFrom={}, lastSeen={};
+  var joined=false, txing=false, txIds=[], target="";
+  var wakeLock=null, ac=null, keepAlive=null;
+  var scanTimer=null, pingTimer=null, memberTimer=null, rebuilding=false;
+
+  /* ---------- 유틸 ---------- */
+  var toastT;
+  function toast(m){
+    var t=$("toast"); t.textContent=m; t.classList.add("show");
+    clearTimeout(toastT); toastT=setTimeout(function(){ t.classList.remove("show"); },2600);
+  }
+  function slug(s){
+    return String(s||"").toLowerCase().replace(/[^a-z0-9가-힣-]/g,"").slice(0,24);
+  }
+  function hash(s){
+    var h=5381; for(var i=0;i<s.length;i++) h=((h<<5)+h+s.charCodeAt(i))>>>0;
+    return h.toString(36);
+  }
+  function idFor(n){ return NS+"-"+hash(channel)+"-"+n; }
+
+  /* ---------- 소리 / 진동 ---------- */
+  function audioCtx(){
+    if(!ac){ try{ ac=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
+    if(ac && ac.state==="suspended"){ try{ ac.resume(); }catch(e){} }
+    return ac;
+  }
+  function beep(freq,dur,vol){
+    var c=audioCtx(); if(!c) return;
+    try{
+      var o=c.createOscillator(), g=c.createGain();
+      o.type="sine"; o.frequency.value=freq;
+      g.gain.setValueAtTime(vol||0.07, c.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime+dur);
+      o.connect(g); g.connect(c.destination);
+      o.start(); o.stop(c.currentTime+dur);
+    }catch(e){}
+  }
+  function buzz(p){ try{ navigator.vibrate && navigator.vibrate(p); }catch(e){} }
+
+  // 예약 발음 — 벨소리를 미리 일정에 걸어둔다
+  var ringNodes = [];
+  function tone(at, freq, dur, vol){
+    var c = audioCtx(); if(!c) return;
+    try{
+      var o=c.createOscillator(), g=c.createGain();
+      ringNodes.push(o);
+      o.type="sine"; o.frequency.value=freq;
+      g.gain.setValueAtTime(0.0001, at);
+      g.gain.exponentialRampToValueAtTime(vol||0.16, at+0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, at+dur);
+      o.connect(g); g.connect(c.destination);
+      o.start(at); o.stop(at+dur+0.02);
+    }catch(e){}
+  }
+  var ringing = false;
+  // 띵-띵-띠 를 10번. 전화벨처럼.
+  function ringTone(times, who){
+    var c = audioCtx(); if(!c || ringing) return;
+    ringing = true;
+    showRingBar(who);
+    times = times || 10;
+    var t0 = c.currentTime + 0.05;
+    for(var i=0;i<times;i++){
+      var b = t0 + i*0.95;
+      tone(b,        880, 0.15);
+      tone(b + 0.20, 880, 0.15);
+      tone(b + 0.40, 1245, 0.26);
+    }
+    var pat = [];
+    for(var k=0;k<times;k++) pat.push(220, 90, 220, 90, 300, 240);
+    buzz(pat);
+    setTimeout(function(){ ringing = false; }, times*950 + 300);
+  }
+  function stopRing(){
+    ringing = false;
+    try{ navigator.vibrate && navigator.vibrate(0); }catch(e){}
+    ringNodes.forEach(function(o){ try{ o.stop(); }catch(e){} try{ o.disconnect(); }catch(e){} });
+    ringNodes = [];
+    hideRingBar();
+    /* 알림창도 함께 닫는다 */
+    try{
+      navigator.serviceWorker && navigator.serviceWorker.ready.then(function(reg){
+        if(reg.active) reg.active.postMessage({ t:"stopring" });
+        reg.getNotifications({ tag:"walkie-call" }).then(function(ns){
+          ns.forEach(function(n){ try{ n.close(); }catch(e){} });
+        }).catch(function(){});
+      });
+    }catch(e){}
+  }
+  /* 울리는 동안 화면 위에 뜨는 '호출 끄기' 띠 */
+  function showRingBar(who){
+    var b = document.getElementById("ringbar");
+    if(!b){
+      b = document.createElement("div");
+      b.id = "ringbar";
+      b.innerHTML = '<span id="ringwho">호출이 왔습니다</span><button id="ringstop">호출 끄기</button>';
+      document.body.appendChild(b);
+      document.getElementById("ringstop").onclick = stopRing;
+    }
+    document.getElementById("ringwho").textContent =
+      (who ? who + "님이 부르고 있습니다" : "호출이 왔습니다");
+    b.style.display = "flex";
+  }
+  function hideRingBar(){
+    var b = document.getElementById("ringbar");
+    if(b) b.style.display = "none";
+  }
+  function cueIncoming(dm){
+    if(dm){ beep(980,0.12); setTimeout(function(){ beep(1240,0.14); },130); buzz([40,60,40,60,80]); }
+    else  { beep(760,0.11); buzz(55); }
+  }
+
+  /* ---------- 화면 꺼짐 방지 + 백그라운드 유지 ---------- */
+  async function holdScreen(on){
+    try{
+      if(on){
+        if("wakeLock" in navigator && !wakeLock)
+          wakeLock = await navigator.wakeLock.request("screen");
+      }else if(wakeLock){ await wakeLock.release(); wakeLock=null; }
+    }catch(e){}
+  }
+  document.addEventListener("visibilitychange", function(){
+    if(document.visibilityState==="visible" && joined){ holdScreen(true); watchdog(); }
+  });
+  window.addEventListener("online", function(){ if(joined) watchdog(); });
+  window.addEventListener("pageshow", function(){ if(joined) watchdog(); });
+  function keepAudioAlive(on){
+    if(on){
+      var c=audioCtx(); if(!c) return;
+      if(keepAlive) return;
+      try{
+        var o=c.createOscillator(), g=c.createGain();
+        g.gain.value=0.0001; o.frequency.value=20;
+        o.connect(g); g.connect(c.destination); o.start();
+        keepAlive={o:o,g:g};
+      }catch(e){}
+    }else if(keepAlive){
+      try{ keepAlive.o.stop(); }catch(e){}
+      keepAlive=null;
+    }
+  }
+
+  /* ---------- 명단 그리기 ---------- */
+  function render(){
+    var ids = openIds().sort(function(a,b){
+      return (names[a]||"").localeCompare(names[b]||"");
+    });
+    var html = "";
+    var onlineNames = {};
+    ids.forEach(function(id){
+      var nm = names[id] || "이름 확인 중";
+      onlineNames[nm] = true;
+      var stale = lastSeen[id] ? (Date.now() - lastSeen[id]) : 0;
+      var sub = talking[id] ? (dmFrom[id] ? "나에게만 말하는 중" : "말하는 중")
+              : (stale > 12000 ? "확인 중…" : "대기");
+      html += rowHtml(id, nm, sub, true, !!talking[id], target===id, !!dmFrom[id]);
+    });
+    // 꺼져 있는 가족도 명단에 남긴다 — 눌러서 그 사람만 호출
+    var shown = {};
+    members.forEach(function(m){
+      if(onlineNames[m.name] || m.name === myName) return;
+      shown[m.name] = true;
+      html += '<div class="row off" data-ring="'+esc(m.id)+'" data-nm="'+esc(m.name)+'">'
+            + '<span class="dot"></span>'
+            + '<span class="nm">'+esc(m.name)+'</span>'
+            + '<span class="sub">꺼져 있음 · 눌러서 호출</span></div>';
+    });
+    // 서버 명단에 없어도 전에 같이 접속했던 가족은 남겨 둔다
+    knownNames().forEach(function(nm){
+      if(onlineNames[nm] || shown[nm] || nm === myName) return;
+      html += '<div class="row off">'
+            + '<span class="dot"></span>'
+            + '<span class="nm">'+esc(nm)+'</span>'
+            + '<span class="sub">꺼져 있음</span></div>';
+    });
+    if(!ids.length && !members.length && !knownNames().length)
+      html += '<div class="row" style="justify-content:center;color:#8b949e;font-size:13.5px">'
+            + '아직 등록된 가족이 없습니다</div>';
+    roster.innerHTML = html;
+    Array.prototype.forEach.call(roster.querySelectorAll(".row"), function(el){
+      if(el.dataset.ring) el.onclick = function(){ ringOne(el.dataset.ring, el.dataset.nm); };
+      else if(el.dataset.id) el.onclick = function(){ pick(el.dataset.id); };
+    });
+    tgtEl.innerHTML = target ? "<b>"+(names[target]||"상대")+"</b> 에게 송신"
+                             : "명단에서 보낼 사람을 골라 주세요";
+    ptt.disabled = !joined || !target;
+  }
+  function rowHtml(id,nm,sub,up,tx,sel,dm){
+    return '<div class="row'+(sel?" sel":"")+(tx?" on":"")+'" data-id="'+id+'">'
+      + '<span class="dot '+(tx?"tx":(up?"up":""))+'"></span>'
+      + '<span class="nm">'+esc(nm)+'</span>'
+      + '<span class="sub'+(tx?" hot":"")+'">'+esc(sub)+'</span></div>';
+  }
+  function esc(s){ return String(s).replace(/[&<>"]/g,function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+
+  function pick(id){
+    if(target===id){ target=""; }
+    else if(conns[id] && conns[id].open){ target=id; }
+    else { toast("아직 연결되지 않았습니다"); return; }
+    beep(target?880:520,0.06,0.05);
+    render();
+  }
+
+
+  /* ---------- 연결 ---------- */
+  function newPeer(id){
+    return new Peer(id, { debug:0, pingInterval:3000, config:{ iceServers:[
+      {urls:"stun:stun.l.google.com:19302"},
+      {urls:"stun:global.stun.twilio.com:3478"}
+    ]}});
+  }
+  function claim(n){
+    return new Promise(function(res){
+      var p=newPeer(idFor(n)), done=false;
+      var t=setTimeout(function(){ if(!done){ done=true; try{p.destroy();}catch(e){} res(false);} },9000);
+      p.on("open", function(){ if(done) return; done=true; clearTimeout(t); peer=p; mySlot=n; res(true); });
+      p.on("error", function(){ if(done) return; done=true; clearTimeout(t); try{p.destroy();}catch(e){} res(false); });
+    });
+  }
+  function streamFor(id){
+    if(!clones[id]){
+      var c = micTrack.clone(); c.enabled=false;
+      clones[id] = new MediaStream([c]);
+    }
+    return clones[id];
+  }
+  function reach(id){
+    if(!peer || conns[id] || pending[id]) return;
+    try{
+      var dc = peer.connect(id, {reliable:true, metadata:{name:myName}});
+      wireData(dc, false);
+    }catch(e){}
+  }
+  // incoming === true 일 때만 metadata.name 이 '상대' 이름이다.
+  // 내가 건 연결의 metadata 는 내가 보낸 값이므로 이름으로 쓰면 안 된다.
+  function wireData(dc, incoming){
+    var id = dc.peer;
+    if(incoming && dc.metadata && dc.metadata.name) names[id] = dc.metadata.name;
+    pending[id] = dc;
+    setTimeout(function(){
+      if(pending[id] === dc && !(conns[id])){ try{ dc.close(); }catch(e){} delete pending[id]; }
+    }, 12000);
+    dc.on("open", function(){
+      delete pending[id];
+      conns[id] = dc;
+      lastSeen[id] = Date.now();
+      dc.send({t:"hi", name:myName});
+      if(!calls[id]){
+        try{
+          var mc = peer.call(id, streamFor(id), {metadata:{name:myName}});
+          wireCall(mc);
+        }catch(e){}
+      }
+      render();
+    });
+    dc.on("data", function(m){
+      if(!m || !m.t) return;
+      lastSeen[id] = Date.now();
+      if(m.t==="ping"){ try{ dc.send({t:"pong"}); }catch(e){} return; }
+      if(m.t==="pong"){ return; }
+      if(m.t==="hi"){
+        names[id]=m.name;
+        rememberName(m.name);
+        if(!dc.__greeted){ dc.__greeted = true; try{ dc.send({t:"hi", name:myName}); }catch(e){} }
+      }
+      else if(m.t==="talk"){ talking[id]=true; dmFrom[id]=!!m.dm; cueIncoming(!!m.dm); }
+      else if(m.t==="stop"){ talking[id]=false; dmFrom[id]=false; }
+      else if(m.t==="bye"){ drop(id); return; }
+      else if(m.t==="bye"){ drop(id); return; }
+      render();
+    });
+    dc.on("close", function(){ drop(id); });
+    dc.on("error", function(){ drop(id); });
+  }
+  function wireCall(mc){
+    var id = mc.peer;
+    calls[id]=mc;
+    mc.on("stream", function(rs){
+      var el = document.getElementById("a-"+id);
+      if(!el){
+        el=document.createElement("audio");
+        el.id="a-"+id; el.autoplay=true; el.playsInline=true;
+        document.body.appendChild(el);
+      }
+      el.srcObject = rs;
+      var pr = el.play(); if(pr && pr.catch) pr.catch(function(){});
+    });
+    mc.on("close", function(){ delete calls[id]; });
+    mc.on("error", function(){ delete calls[id]; });
+  }
+  function drop(id){
+    try{ conns[id] && conns[id].close(); }catch(e){}
+    try{ pending[id] && pending[id].close(); }catch(e){}
+    try{ calls[id] && calls[id].close(); }catch(e){}
+    delete conns[id]; delete pending[id]; delete calls[id]; delete names[id];
+    delete talking[id]; delete dmFrom[id]; delete lastSeen[id];
+    if(clones[id]){ clones[id].getTracks().forEach(function(t){t.stop();}); delete clones[id]; }
+    var el=document.getElementById("a-"+id); if(el) el.remove();
+    if(target===id) target="";
+    if(joined) render();
+  }
+  function openIds(){
+    return Object.keys(conns).filter(function(i){ return conns[i] && conns[i].open; });
+  }
+
+  /* ---------- 끊김 방지: 감시 + 연결 유지 ---------- */
+  function setPill(extra){
+    pill.innerHTML = "채널 <b>"+esc(channel)+"</b>" + (extra ? " · " + extra : "");
+  }
+
+  function attachPeerHandlers(){
+    peer.on("connection", function(dc){ wireData(dc, true); });
+    peer.on("call", function(mc){ mc.answer(streamFor(mc.peer)); wireCall(mc); });
+    peer.on("error", function(e){
+      if(!e) return;
+      if(e.type==="peer-unavailable"){
+        var m = String(e.message||"").match(/[\w-]*jhwt-[\w-]+/);
+        if(m && pending[m[0]]) delete pending[m[0]];
+        return;
+      }
+      if(e.type==="network"||e.type==="server-error") setPill("재연결 중…");
+    });
+    peer.on("disconnected", function(){
+      setPill("재연결 중…");
+      try{ peer.reconnect(); }catch(e){}
+    });
+    peer.on("close", function(){ if(joined) rebuildPeer(); });
+    peer.on("open", function(){ setPill(); });
+  }
+
+  async function rebuildPeer(){
+    if(rebuilding || !joined) return;
+    rebuilding = true;
+    setPill("재연결 중…");
+    try{
+      try{ peer && peer.destroy(); }catch(e){}
+      Object.keys(conns).forEach(function(id){ try{ conns[id].close(); }catch(e){} });
+      Object.keys(clones).forEach(function(id){
+        clones[id].getTracks().forEach(function(t){ t.stop(); });
+      });
+      document.querySelectorAll('audio[id^="a-"]').forEach(function(el){ el.remove(); });
+      conns={}; pending={}; calls={}; clones={}; talking={}; dmFrom={}; lastSeen={};
+      peer = null;
+
+      var ok=false;
+      for(var i=1;i<=SLOTS;i++){ ok = await claim(i); if(ok) break; }
+      if(ok){
+        attachPeerHandlers();
+        for(var k=1;k<=SLOTS;k++) if(k!==mySlot) reach(idFor(k));
+        setPill();
+      }else{
+        setPill("재연결 실패 — 다시 시도");
+      }
+      render();
+    } finally { rebuilding = false; }
+  }
+
+  function watchdog(){
+    if(!joined || rebuilding) return;
+    if(!peer || peer.destroyed){ rebuildPeer(); return; }
+    if(peer.disconnected){ setPill("재연결 중…"); try{ peer.reconnect(); }catch(e){} }
+    // 끊긴 자리 다시 붙기
+    for(var k=1;k<=SLOTS;k++){
+      var id = idFor(k);
+      if(k!==mySlot && !conns[id]) reach(id);
+    }
+    // 응답 없는 상대 정리
+    var now = Date.now();
+    openIds().forEach(function(id){
+      if(!lastSeen[id]) lastSeen[id] = now;
+      if(now - lastSeen[id] > 30000) drop(id);
+    });
+    if(!rebuilding && peer && !peer.disconnected) setPill();
+  }
+
+  function startLoops(){
+    stopLoops();
+    loadMembers();
+    memberTimer = setInterval(loadMembers, 30000);
+    scanTimer = setInterval(watchdog, 4000);
+    pingTimer = setInterval(function(){
+      if(!joined) return;
+      openIds().forEach(function(id){
+        try{ conns[id].send({t:"ping"}); }catch(e){ drop(id); }
+      });
+    }, 8000);
+  }
+  function stopLoops(){
+    if(scanTimer){ clearInterval(scanTimer); scanTimer=null; }
+    if(pingTimer){ clearInterval(pingTimer); pingTimer=null; }
+    if(memberTimer){ clearInterval(memberTimer); memberTimer=null; }
+  }
+
+  /* ---------- 접속 / 나가기 ---------- */
+  joinBtn.onclick = async function(){
+    var n = (nmEl.value||"").trim().slice(0,12);
+    if(!n){ toast("이름을 입력하세요"); return; }
+    channel = CHANNEL; myName = n;
+    try{ localStorage.setItem("wt", JSON.stringify({n:n})); }catch(e){}
+
+    joinBtn.disabled=true; joinBtn.textContent="마이크 확인 중…";
+    audioCtx();
+    try{
+      micStream = await navigator.mediaDevices.getUserMedia({
+        audio:{echoCancellation:true, noiseSuppression:true, autoGainControl:true}, video:false
+      });
+    }catch(e){
+      joinBtn.disabled=false; joinBtn.textContent="접속하기";
+      toast("마이크 권한이 필요합니다. 주소창 자물쇠 → 마이크 허용");
+      return;
+    }
+    micTrack = micStream.getAudioTracks()[0];
+
+    joinBtn.textContent="채널 접속 중…";
+    var ok=false;
+    for(var i=1;i<=SLOTS;i++){ ok = await claim(i); if(ok) break; }
+    if(!ok){
+      joinBtn.disabled=false; joinBtn.textContent="접속하기";
+      micStream.getTracks().forEach(function(t){t.stop();});
+      toast("채널이 가득 찼거나 연결에 실패했습니다");
+      return;
+    }
+
+    joined=true;
+    attachPeerHandlers();
+    for(var k=1;k<=SLOTS;k++) if(k!==mySlot) reach(idFor(k));
+    startLoops();
+
+    enablePush(false);
+    holdScreen(true); keepAudioAlive(true);
+    setup.style.display="none"; live.style.display="flex";
+    setPill();
+    joinBtn.disabled=false; joinBtn.textContent="접속하기";
+    render();
+    toast("채널 "+channel+" 접속 완료");
+  };
+
+  /* 앱을 닫거나 꺼질 때 상대에게 알려 준다 — 명단에 유령이 남지 않게 */
+  function sayBye(){
+    openIds().forEach(function(id){ try{ conns[id].send({t:"bye"}); }catch(e){} });
+  }
+  window.addEventListener("pagehide", function(e){ if(!e.persisted) sayBye(); });
+  window.addEventListener("beforeunload", sayBye);
+  /* 다른 앱 쓰다 돌아오면 바로 명단을 새로 확인한다 (화면이 꺼진 동안은 타이머가 느려짐) */
+  document.addEventListener("visibilitychange", function(){
+    if(document.visibilityState === "visible" && joined){
+      try{ watchdog(); }catch(e){}
+      loadMembers();
+      openIds().forEach(function(id){ try{ conns[id].send({t:"ping"}); }catch(e){} });
+    }
+  });
+
+  $("leave").onclick = function(){
+    joined=false; stopTx(); stopLoops();
+    openIds().forEach(function(id){ try{ conns[id].send({t:"bye"}); }catch(e){} });
+    Object.keys(conns).forEach(drop);
+    if(micStream) micStream.getTracks().forEach(function(t){t.stop();});
+    if(peer){ try{ peer.destroy(); }catch(e){} }
+    peer=null; micStream=null; micTrack=null;
+    document.querySelectorAll('audio[id^="a-"]').forEach(function(el){ el.remove(); });
+    conns={}; pending={}; calls={}; clones={}; names={}; talking={}; dmFrom={}; lastSeen={};
+    target="";
+    holdScreen(false); keepAudioAlive(false);
+    live.style.display="none"; setup.style.display="flex";
+    pill.textContent="대기 중";
+  };
+
+  /* ---------- PTT ---------- */
+  function startTx(){
+    if(!joined || txing || !micTrack) return;
+    stopRing();
+    if(!target){ toast("명단에서 보낼 사람을 먼저 골라 주세요"); return; }
+    txIds = (conns[target] && conns[target].open) ? [target] : [];
+    if(!txIds.length){ toast("상대가 연결되어 있지 않습니다"); return; }
+    txing=true;
+    audioCtx();
+    txIds.forEach(function(id){
+      streamFor(id).getAudioTracks().forEach(function(t){ t.enabled=true; });
+      try{ conns[id].send({t:"talk", dm: true}); }catch(e){}
+    });
+    ptt.classList.add("down"); ptt.textContent="송신 중…";
+    beep(1100,0.07,0.05); buzz(25);
+  }
+  function stopTx(){
+    if(!txing) return;
+    txing=false;
+    txIds.forEach(function(id){
+      if(clones[id]) clones[id].getAudioTracks().forEach(function(t){ t.enabled=false; });
+      try{ conns[id] && conns[id].send({t:"stop"}); }catch(e){}
+    });
+    txIds=[];
+    ptt.classList.remove("down"); ptt.textContent="누르고 말하기";
+    beep(620,0.06,0.04);
+  }
+  ["pointerdown","touchstart"].forEach(function(ev){
+    ptt.addEventListener(ev, function(e){ e.preventDefault(); startTx(); }, {passive:false});
+  });
+  ["pointerup","pointercancel","pointerleave","touchend","touchcancel"].forEach(function(ev){
+    ptt.addEventListener(ev, function(e){ e.preventDefault(); stopTx(); }, {passive:false});
+  });
+  window.addEventListener("blur", stopTx);
+  document.addEventListener("keydown", function(e){ if(e.code==="Space" && joined){ e.preventDefault(); startTx(); } });
+  document.addEventListener("keyup",   function(e){ if(e.code==="Space"){ e.preventDefault(); stopTx(); } });
+
+  window.addEventListener("beforeunload", function(){
+    openIds().forEach(function(id){ try{ conns[id].send({t:"bye"}); }catch(e){} });
+  });
+
+  /* ---------- 푸시 호출 (앱이 꺼져 있어도 울림) ---------- */
+  var VAPID_PUB = "BFdAOvacqW4B7n5n_6BO-8_bRjlj_6j-f3nKOR_RBsJXVgdplNzPclY36bZ9dE4OVHBjv2h_OUd5EdcGpMAyMPA";
+  var myEndpoint = "", members = [];
+
+  /* 알림 서버는 넷리파이에 있다. 다른 주소에서 열어도 그쪽으로 보낸다 */
+  var API = (location.host.indexOf("jh-walkie.netlify.app") >= 0) ? "" : "https://jh-walkie.netlify.app";
+  var XORIGIN = API !== "";
+  function apiRead(path, data){           /* 답을 읽어야 하는 요청 */
+    return fetch(API + "/.netlify/functions/" + path, {
+      method:"POST", headers:{"content-type":"application/json"},
+      body: JSON.stringify(data)
+    }).then(function(r){ return r.json(); });
+  }
+  function apiSend(path, data){           /* 보내기만 하는 요청 — 다른 주소에서도 통한다 */
+    if(!XORIGIN) return apiRead(path, data);
+    return fetch(API + "/.netlify/functions/" + path, {
+      method:"POST", mode:"no-cors",
+      headers:{"content-type":"text/plain;charset=UTF-8"},
+      body: JSON.stringify(data)
+    }).then(function(){ return { ok:true, blind:true }; });
+  }
+
+  /* 서버 명단을 읽을 수 없을 때 쓰는 기본 명단 */
+  var ROSTER = [
+    { id:"832a5507be63b4a696cd5cff01046539", name:"아빠" },
+    { id:"27eb3372152d48b97131fbd258790dba", name:"엄마" },
+    { id:"dd200b9764286563909c650c9096fd38", name:"아라" },
+    { id:"77c3c2c431b7b5c26a09d832f890ee06", name:"테블릿" },
+    { id:"42f2bd193d130673a50c2e32e76e94d6", name:"이든" }
+  ];
+  var ROSTER_KEY = "jhwt.roster";
+
+  /* 한 번이라도 본 가족 이름을 기억해 둔다 — 서버 명단에서 빠져도 사라지지 않게 */
+  var KNOWN_KEY = "jhwt.known";
+  function knownNames(){
+    try{ return JSON.parse(localStorage.getItem(KNOWN_KEY) || "[]"); }catch(e){ return []; }
+  }
+  function rememberName(nm){
+    if(!nm || nm === "이름 확인 중") return;
+    var list = knownNames();
+    if(list.indexOf(nm) >= 0) return;
+    list.push(nm);
+    if(list.length > 12) list = list.slice(-12);
+    try{ localStorage.setItem(KNOWN_KEY, JSON.stringify(list)); }catch(e){}
+  }
+
+  async function loadMembers(){
+    try{
+      var j = await apiRead("subs", { action:"list" });
+      if(j.ok && Array.isArray(j.members) && j.members.length){
+        members = j.members;
+        for(var i=0;i<members.length;i++) rememberName(members[i].name);
+        try{ localStorage.setItem(ROSTER_KEY, JSON.stringify(members)); }catch(e){}
+        if(joined) render();
+        return;
+      }
+    }catch(e){}
+    /* 서버 명단을 못 읽는 주소 — 저장해 둔 명단으로 채운다 */
+    if(!members.length){
+      var saved = [];
+      try{ saved = JSON.parse(localStorage.getItem(ROSTER_KEY) || "[]"); }catch(e){}
+      members = (saved.length ? saved : ROSTER);
+      if(joined) render();
+    }
+  }
+
+  async function ringOne(id, nm){
+    if(!confirm(nm + "님을 호출할까요?\n폰이 꺼져 있어도 알림이 울립니다.")) return;
+    try{
+      var j = await apiSend("call", { from: myName, to: id, exclude: myEndpoint });
+      if(j.blind){ toast(nm + "님에게 호출을 보냈습니다"); return; }
+      toast(j.sent ? (nm + "님을 호출했습니다") : (nm + "님에게 보내지 못했습니다"));
+      if(j.gone) loadMembers();
+    }catch(e){ toast("호출 실패: " + (e.message||e)); }
+  }
+
+  function b64ToU8(s){
+    var p = (s + "=".repeat((4 - s.length % 4) % 4)).replace(/-/g,"+").replace(/_/g,"/");
+    var raw = atob(p), u = new Uint8Array(raw.length);
+    for (var i=0;i<raw.length;i++) u[i] = raw.charCodeAt(i);
+    return u;
+  }
+  function pushUI(){
+    var box = $("push"), btn = $("pushBtn");
+    if(!("PushManager" in window)){ box.style.display="none"; return; }
+    if(Notification.permission === "granted" && myEndpoint){
+      box.classList.add("on"); btn.textContent = "알림 켜짐 ✓";
+    } else if(Notification.permission === "denied"){
+      btn.textContent = "브라우저에서 허용 필요";
+    } else {
+      box.classList.remove("on"); btn.textContent = "알림 켜기";
+    }
+  }
+  async function enablePush(ask){
+    if(!("serviceWorker" in navigator) || !("PushManager" in window)) return false;
+    try{
+      var perm = Notification.permission;
+      if(perm === "default"){
+        if(!ask) return false;
+        perm = await Notification.requestPermission();
+      }
+      if(perm !== "granted"){
+        if(ask) toast("알림이 차단되어 있습니다. 주소창 자물쇠 → 알림 허용");
+        pushUI(); return false;
+      }
+      var reg = await navigator.serviceWorker.ready;
+      var sub = await reg.pushManager.getSubscription();
+      if(!sub) sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true, applicationServerKey: b64ToU8(VAPID_PUB)
+      });
+      var nm = (nmEl.value||"").trim() || myName || "가족";
+      var j = await apiSend("subs", { name: nm, sub: sub });
+      if(!j.ok) throw new Error(j.err || "등록 실패");
+      myEndpoint = sub.endpoint;
+      rememberName(nm);
+      pushUI();
+      loadMembers();
+      if(ask) toast(j.blind ? "알림 켜짐" : ("알림 켜짐 — 등록된 기기 " + (j.registered||1) + "대"));
+      return true;
+    }catch(e){
+      if(ask) toast("알림 설정 실패: " + (e.message||e));
+      pushUI(); return false;
+    }
+  }
+  $("pushBtn").onclick = function(){ enablePush(true); };
+
+  /* ---------- 복원 / 설치 ---------- */
+  try{
+    var s=JSON.parse(localStorage.getItem("wt")||"{}");
+    if(s.n) nmEl.value=s.n;
+  }catch(e){}
+
+  var deferred=null;
+  window.addEventListener("beforeinstallprompt", function(e){
+    e.preventDefault(); deferred=e; $("install").style.display="block";
+  });
+  $("installBtn").onclick = async function(){
+    if(!deferred){ toast("브라우저 메뉴 ⋮ → 홈 화면에 추가 를 눌러주세요"); return; }
+    deferred.prompt(); await deferred.userChoice;
+    deferred=null; $("install").style.display="none";
+  };
+  if(window.matchMedia("(display-mode: standalone)").matches) $("install").style.display="none";
+
+  if("serviceWorker" in navigator){
+    navigator.serviceWorker.register("sw.js").then(function(){
+      // 이미 허용돼 있으면 조용히 등록 갱신
+      enablePush(false);
+      pushUI();
+    }).catch(function(){});
+    navigator.serviceWorker.addEventListener("message", function(e){
+      if(!e.data) return;
+      if(e.data.t === "autojoin" && !joined) joinBtn.click();
+      if(e.data.t === "ring"){
+        ringTone(10, e.data.from || "");
+        toast((e.data.from ? e.data.from + "님이" : "누군가") + " 부르고 있습니다");
+      }
+      if(e.data.t === "stopring") stopRing();
+    });
+  }
+  pushUI();
+
+  // 알림을 눌러서 열렸으면 바로 접속
+  if(/[?&]join=1/.test(location.search) && nmEl.value.trim()){
+    setTimeout(function(){ if(!joined) joinBtn.click(); }, 400);
+  }
+})();
+</script>
+</body>
+</html>
