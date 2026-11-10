@@ -46,7 +46,7 @@ self.addEventListener('fetch', (e) => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin !== location.origin) return;
-  if (url.pathname.indexOf('/walkie/') >= 0) return;   // 무전기는 무전기 서비스워커가 담당
+  if (url.pathname.indexOf('/walkie/') >= 0 || url.pathname.indexOf('/wordhunt/') >= 0) return;  // 다른 앱은 그 앱 서비스워커가 담당
 
   // 문서는 네트워크 우선(새 버전 반영), 실패하면 캐시
   if (req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html')) {
