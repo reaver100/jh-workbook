@@ -12,7 +12,7 @@
   };
   const SUBJ_ORDER = ['korean', 'english', 'math', 'science', 'social'];
   const EMOJIS = ['🐻', '🐰', '🦊', '🐼', '🦁', '🐯', '🐸', '🐥', '🦄', '🐙'];
-  const COUNTS = [10, 20, 30];
+  const SET_SIZE = 20;   /* 한 단원을 고르면 이만큼 나온다 */
   /* 수학은 문제가 무한히 만들어지므로 한 단원당 이만큼 풀면 다음 단원으로 넘어간다 */
   const MATH_QUOTA = 24;
 
@@ -167,6 +167,44 @@
     if (subject === 'math') return Math.max(mathUnits(grade).length, 1) * MATH_QUOTA;
     return orderedBank(grade, subject).length;
   }
+  /* ---------------- 단원 ---------------- */
+  /* 과목의 단원 목록. 수학은 자동 생성이라 문제 수가 정해져 있지 않다(total 0). */
+  function unitsOf(grade, subject) {
+    if (subject === 'math') return mathUnits(grade).map((u) => ({ id: u.id, name: u.name, total: 0, items: null }));
+    const pool = orderedBank(grade, subject);
+    const map = new Map();
+    pool.forEach((it) => { if (!map.has(it.u)) map.set(it.u, []); map.get(it.u).push(it); });
+    return [...map.entries()].map(([name, items]) => ({ id: name, name: name, total: items.length, items: items }));
+  }
+  function unitKey(grade, subject, unitId) { return 'u|' + subject + '|' + grade + '|' + unitId; }
+  function unitProg(grade, subject, unitId) {
+    const d = me();
+    if (!d) return { done: 0, sets: 0, round: 1 };
+    const k = unitKey(grade, subject, unitId);
+    const p = d.prog[k];
+    if (!p || typeof p !== 'object') d.prog[k] = { done: 0, sets: 0, round: 1 };
+    else {
+      if (typeof p.done !== 'number') p.done = 0;
+      if (typeof p.sets !== 'number') p.sets = 0;
+      if (typeof p.round !== 'number') p.round = 1;
+    }
+    return d.prog[k];
+  }
+  /* 고른 단원에서 이어지는 문제를 만든다 */
+  function buildUnitSet(grade, subject, unit, done) {
+    if (subject === 'math') {
+      const qs = (window.MATH_ENGINE && window.MATH_ENGINE.make(grade, [unit.id], SET_SIZE)) || [];
+      return qs.map((q) => Object.assign(q, { key: 'math|' + grade + '|' + q.q, placeholder: q.placeholder || '답' }));
+    }
+    const items = unit.items || [];
+    if (!items.length) return [];
+    const take = Math.min(SET_SIZE, items.length);
+    const start = ((done % items.length) + items.length) % items.length;
+    const out = [];
+    for (let i = 0; i < take; i++) out.push(fromBank(items[(start + i) % items.length], grade, subject));
+    return out;
+  }
+
   function progKey(grade, subject) { return subject + '|' + grade; }
   function progOf(grade, subject) {
     const d = me();
@@ -331,9 +369,10 @@
     SUBJ_ORDER.forEach((k) => {
       const s = d.solved[k] || 0, c = d.correct[k] || 0;
       const id = 'p' + k.charAt(0).toUpperCase() + k.slice(1);
-      const pr = (d.prog || {})[progKey(p.grade, k)];
-      const stage = pr ? (pr.sets || 0) + 1 : 1;
-      $(id).textContent = s ? '다음 ' + stage + '단계 · ' + Math.round((c / s) * 100) + '%' : '시작하기';
+      const un = unitsOf(p.grade, k).length;
+      $(id).textContent = s
+        ? un + '개 단원 · 정답률 ' + Math.round((c / s) * 100) + '%'
+        : un + '개 단원';
     });
     const wn = d.wrong.length;
     $('resumeMsg').textContent = wn
@@ -341,53 +380,81 @@
       : '오답노트는 아직 비어 있어요. 문제를 풀면 틀린 것만 모입니다.';
   }
 
-  /* ---------------- 문제 수 고르기 ---------------- */
-  let setup = { subject: 'math', count: 10 };
+  /* ---------------- 단원 고르기 ---------------- */
+  let setup = { subject: 'math', unit: null };
   function openSetup(subject) {
     if (!SUBJ[subject]) return;
     const p = profile();
     setup.subject = subject;
-    const pr = progOf(p.grade, subject);
-    const total = poolSize(p.grade, subject);
+    const list = unitsOf(p.grade, subject);
     $('setupTitle').textContent = SUBJ[subject].ico + ' ' + SUBJ[subject].name + ' · ' + p.grade + '학년';
 
-    if (!total) {
+    if (!list.length) {
       $('setupHint').textContent = '아직 이 학년 문제가 준비되지 않았어요.';
       $('setupProg').textContent = '';
       $('setupBar').style.width = '0%';
-    } else {
-      const nextUnit = unitAt(p.grade, subject, pr.done);
-      $('setupHint').textContent = '다음은 ' + (pr.sets + 1) + '단계 문제예요.'
-        + (nextUnit ? " '" + nextUnit + "' 단원부터 이어서 나옵니다." : '');
-      $('setupProg').textContent = subject === 'math'
-        ? '수학은 문제가 매번 새로 만들어져요 · ' + mathUnits(p.grade).length + '개 단원을 차례로 돌아요'
-          + (pr.round > 1 ? ' · ' + pr.round + '바퀴째' : '')
-        : '전체 ' + total + '문제 중 ' + pr.done + '문제까지 풀었어요'
-          + (pr.round > 1 ? ' · ' + pr.round + '바퀴째' : '');
-      $('setupBar').style.width = Math.round((pr.done / total) * 100) + '%';
+      $('unitList').innerHTML = '';
+      show('setup');
+      return;
     }
 
-    const cc = $('countChips'); cc.innerHTML = '';
-    COUNTS.forEach((n) => {
-      const c = el('button', 'chip' + (n === setup.count ? ' on' : ''), n + '문제');
-      c.onclick = () => {
-        setup.count = n;
-        [...cc.children].forEach((x, i) => x.classList.toggle('on', COUNTS[i] === n));
-      };
-      cc.appendChild(c);
+    /* 과목 전체 진도 */
+    let done = 0, total = 0, cleared = 0;
+    list.forEach((u) => {
+      const pr = unitProg(p.grade, subject, u.id);
+      if (u.total) { total += u.total; done += Math.min(pr.done, u.total) + (pr.round > 1 ? 0 : 0); }
+      if (u.total && (pr.round > 1 || pr.done >= u.total)) cleared++;
+      if (!u.total && pr.sets > 0) cleared++;
+    });
+    $('setupHint').textContent = subject === 'math'
+      ? '단원을 고르면 그 단원 문제가 20개 나와요. 수학은 숫자가 매번 새로 만들어집니다.'
+      : '단원을 고르면 아직 안 푼 문제부터 20개가 이어서 나와요.';
+    $('setupProg').textContent = subject === 'math'
+      ? list.length + '개 단원'
+      : list.length + '개 단원 · 전체 ' + total + '문제 중 ' + done + '문제 풀었어요';
+    $('setupBar').style.width = total ? Math.round((done / total) * 100) + '%' : (list.length ? Math.round((cleared / list.length) * 100) + '%' : '0%');
+
+    const box = $('unitList');
+    box.innerHTML = '';
+    list.forEach((u) => {
+      const pr = unitProg(p.grade, subject, u.id);
+      const b = el('button', 'unit');
+      const left = el('div', null);
+      left.style.flex = '1';
+      left.appendChild(el('b', null, u.name));
+      let sub;
+      if (!u.total) {
+        sub = pr.sets > 0 ? pr.sets + '번 풀었어요 · 새 문제가 계속 나와요' : '새 문제가 계속 나와요';
+      } else if (pr.round > 1) {
+        sub = '한 바퀴 다 풀었어요 · ' + pr.round + '바퀴째 ' + pr.done + '/' + u.total;
+      } else {
+        sub = pr.done + ' / ' + u.total + '문제';
+      }
+      const s = el('small', null, sub);
+      s.style.display = 'block';
+      s.style.color = 'var(--ink-soft)';
+      s.style.fontWeight = '600';
+      left.appendChild(s);
+      b.appendChild(left);
+      b.appendChild(el('span', null, '▶'));
+      if (u.total && pr.round > 1) b.classList.add('on');
+      b.onclick = () => startUnitSet(subject, u);
+      box.appendChild(b);
     });
     show('setup');
   }
-  /* 다음 단계 문제로 퀴즈 시작 */
-  function startNextSet(subject, n) {
+
+  /* 고른 단원으로 퀴즈 시작 */
+  function startUnitSet(subject, unit) {
     const p = profile();
     if (!p) return;
-    const pr = progOf(p.grade, subject);
-    const qs = buildNext(p.grade, subject, n, pr.done);
-    if (!qs.length) { toast('아직 이 학년 문제가 준비되지 않았어요'); return; }
-    if (qs.length < n) toast(qs.length + '문제만 낼 수 있어요');
-    startQuiz(qs, SUBJ[subject].name + ' · ' + (pr.sets + 1) + '단계', 'normal', {
-      key: progKey(p.grade, subject), total: poolSize(p.grade, subject)
+    setup.subject = subject;
+    setup.unit = unit;
+    const pr = unitProg(p.grade, subject, unit.id);
+    const qs = buildUnitSet(p.grade, subject, unit, pr.done);
+    if (!qs.length) { toast('이 단원은 아직 문제가 없어요'); return; }
+    startQuiz(qs, SUBJ[subject].name + ' · ' + unit.name, 'normal', {
+      key: unitKey(p.grade, subject, unit.id), total: unit.total || 0
     });
   }
 
@@ -497,9 +564,9 @@
     if (!d) return;
     const pr = d.prog[run.prog.key];
     if (!pr) return;
-    const total = run.prog.total || 1;
+    const total = run.prog.total || 0;
     pr.done = (pr.done || 0) + 1;
-    if (pr.done >= total) { pr.done = 0; pr.round = (pr.round || 1) + 1; }
+    if (total && pr.done >= total) { pr.done = 0; pr.round = (pr.round || 1) + 1; }
   }
   function finish() {
     const d = me();
@@ -519,9 +586,9 @@
     if (run.prog && d && d.prog[run.prog.key]) {
       const pr = d.prog[run.prog.key];
       const p = profile();
-      const nextUnit = p ? unitAt(p.grade, run.qs[0].subject, pr.done) : '';
-      nx.textContent = '여기까지 저장했어요. 다음에는 ' + (pr.sets + 1) + '단계'
-        + (nextUnit ? " · '" + nextUnit + "' 단원" : '') + ' 문제가 이어서 나와요.';
+      const un = setup.unit ? setup.unit.name : '';
+      nx.textContent = '여기까지 저장했어요.'
+        + (un ? " 다음에 '" + un + "' 단원을 고르면 이어서 나와요." : '');
       nx.hidden = false;
     } else {
       nx.hidden = true;
@@ -720,7 +787,7 @@
     };
 
     document.querySelectorAll('.subjects .sub').forEach((b) => { b.onclick = () => openSetup(b.dataset.s); });
-    $('startBtn').onclick = () => startNextSet(setup.subject, setup.count);
+
 
     $('submitBtn').onclick = () => {
       const q = run.qs[run.i];
@@ -733,7 +800,7 @@
     });
     $('nextBtn').onclick = nextQ;
 
-    $('againBtn').onclick = () => startNextSet(setup.subject, setup.count);
+    $('againBtn').onclick = () => { if (setup.unit) startUnitSet(setup.subject, setup.unit); else openSetup(setup.subject); };
     $('retryWrongBtn').onclick = () => {
       const qs = run.wrong.map((q) => {
         if (q.type === 'choice') {
