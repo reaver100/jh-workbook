@@ -12,7 +12,8 @@
   };
   const SUBJ_ORDER = ['korean', 'english', 'math', 'science', 'social'];
   const EMOJIS = ['🐻', '🐰', '🦊', '🐼', '🦁', '🐯', '🐸', '🐥', '🦄', '🐙'];
-  const SET_SIZE = 20;   /* 한 단원을 고르면 이만큼 나온다 */
+  const SET_SIZE = 20;
+  const NO_UNIT = { social: true };   /* 단원을 고르지 않고 전체에서 바로 푸는 과목 */   /* 한 단원을 고르면 이만큼 나온다 */
   /* 수학은 문제가 무한히 만들어지므로 한 단원당 이만큼 풀면 다음 단원으로 넘어간다 */
   const MATH_QUOTA = 24;
 
@@ -171,6 +172,10 @@
   /* 과목의 단원 목록. 수학은 자동 생성이라 문제 수가 정해져 있지 않다(total 0). */
   function unitsOf(grade, subject) {
     if (subject === 'math') return mathUnits(grade).map((u) => ({ id: u.id, name: u.name, total: 0, items: null }));
+    if (NO_UNIT[subject]) {
+      const all = bankOf(grade, subject);
+      return [{ id: '__all__', name: '전체', total: all.length, items: all }];
+    }
     const pool = orderedBank(grade, subject);
     const map = new Map();
     pool.forEach((it) => { if (!map.has(it.u)) map.set(it.u, []); map.get(it.u).push(it); });
@@ -381,10 +386,9 @@
     SUBJ_ORDER.forEach((k) => {
       const s = d.solved[k] || 0, c = d.correct[k] || 0;
       const id = 'p' + k.charAt(0).toUpperCase() + k.slice(1);
-      const un = unitsOf(p.grade, k).length;
-      $(id).textContent = s
-        ? un + '개 단원 · 정답률 ' + Math.round((c / s) * 100) + '%'
-        : un + '개 단원';
+      const us = unitsOf(p.grade, k);
+      const label = NO_UNIT[k] ? ((us[0] ? us[0].total : 0) + '문제') : (us.length + '개 단원');
+      $(id).textContent = s ? label + ' · 정답률 ' + Math.round((c / s) * 100) + '%' : label;
     });
     const wn = d.wrong.length;
     $('resumeMsg').textContent = wn
@@ -399,6 +403,7 @@
     const p = profile();
     setup.subject = subject;
     const list = unitsOf(p.grade, subject);
+    if (NO_UNIT[subject] && list.length) { startUnitSet(subject, list[0]); return; }
     $('setupTitle').textContent = SUBJ[subject].ico + ' ' + SUBJ[subject].name + ' · ' + p.grade + '학년';
 
     if (!list.length) {
@@ -598,9 +603,10 @@
     if (run.prog && d && d.prog[run.prog.key]) {
       const pr = d.prog[run.prog.key];
       const p = profile();
+      const sj = run.qs[0].subject;
       const un = setup.unit ? setup.unit.name : '';
       nx.textContent = '여기까지 저장했어요.'
-        + (un ? " 다음에 '" + un + "' 단원을 고르면 이어서 나와요." : '');
+        + (NO_UNIT[sj] ? ' 다음에 열면 이어서 나와요.' : un ? " 다음에 '" + un + "' 단원을 고르면 이어서 나와요." : '');
       nx.hidden = false;
     } else {
       nx.hidden = true;
