@@ -174,7 +174,19 @@
     const pool = orderedBank(grade, subject);
     const map = new Map();
     pool.forEach((it) => { if (!map.has(it.u)) map.set(it.u, []); map.get(it.u).push(it); });
-    return [...map.entries()].map(([name, items]) => ({ id: name, name: name, total: items.length, items: items }));
+    /* 문제가 몇 개 안 되는 단원은 하나로 모아 준다 — 2~3문제짜리 단원이 생기지 않도록 */
+    const MIN = 10;
+    const big = [], small = [];
+    [...map.entries()].forEach(([name, items]) => {
+      (items.length >= MIN ? big : small).push({ id: name, name: name, total: items.length, items: items });
+    });
+    if (small.length) {
+      const merged = [];
+      small.forEach((u) => u.items.forEach((it) => merged.push(it)));
+      if (small.length === 1) big.push(small[0]);
+      else big.push({ id: '__mix__', name: '여러 단원 모아 풀기', total: merged.length, items: merged });
+    }
+    return big;
   }
   function unitKey(grade, subject, unitId) { return 'u|' + subject + '|' + grade + '|' + unitId; }
   function unitProg(grade, subject, unitId) {
