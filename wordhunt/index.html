@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<title>영어 단어 사냥</title>
+<meta name="theme-color" content="#0f1024">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="단어사냥">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header id="top">
+  <div class="brand">🔎 영어 단어 사냥</div>
+  <div class="score" id="score">
+    <span class="badge" id="badge">🌱</span>
+    <span id="count">0</span>
+  </div>
+</header>
+
+<nav id="tabs">
+  <button class="tab on" data-view="hunt">📸 사냥하기</button>
+  <button class="tab" data-view="book">📖 도감</button>
+  <button class="tab" data-view="quiz">🎯 복습</button>
+</nav>
+
+<!-- ============ 사냥하기 ============ -->
+<main id="hunt" class="view on">
+  <div id="stage">
+    <video id="cam" playsinline muted autoplay></video>
+    <canvas id="shot" hidden></canvas>
+
+    <div id="frame"></div>
+
+    <div id="mission">
+      <div class="mission-title">오늘의 목표</div>
+      <div class="mission-list" id="missionList"></div>
+    </div>
+
+    <div id="hint">물건을 화면 가운데에 크게 담고 찍어 보세요</div>
+
+    <div id="cover">
+      <div class="cover-in">
+        <div class="cover-emoji">📷</div>
+        <h2>카메라로 영어 단어를 모아요</h2>
+        <p>집 안 물건을 찍으면 영어 이름을 알려줘요.<br>처음 한 번은 AI를 내려받느라 조금 걸려요.</p>
+        <button id="startBtn" class="big">시작하기</button>
+        <div class="cover-note" id="coverNote"></div>
+      </div>
+    </div>
+
+    <div id="loading" hidden>
+      <div class="spin"></div>
+      <div id="loadingText">AI 준비 중…</div>
+    </div>
+  </div>
+
+  <div id="shutterRow">
+    <button id="flipBtn" class="round" title="카메라 전환">🔄</button>
+    <button id="shutter" class="shutter"><span></span></button>
+    <button id="soundBtn" class="round" title="소리">🔊</button>
+  </div>
+</main>
+
+<!-- ============ 결과 카드 ============ -->
+<div id="sheet" hidden>
+  <div class="sheet-in">
+    <img id="sheetImg" alt="">
+    <div id="sheetBody">
+      <div id="sheetEn">—</div>
+      <div id="sheetKo"></div>
+      <div id="sheetSub"></div>
+      <div id="alts"></div>
+      <div class="sheet-btns">
+        <button id="retryBtn" class="ghost">다시 찍기</button>
+        <button id="keepBtn" class="big">도감에 담기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 도감 ============ -->
+<main id="book" class="view">
+  <div id="bookTop">
+    <div class="prog">
+      <div class="prog-bar"><div id="progFill"></div></div>
+      <div class="prog-txt" id="progTxt"></div>
+    </div>
+    <button id="editBtn" class="ghost small">편집</button>
+  </div>
+  <div id="grid"></div>
+  <div id="empty">아직 모은 단어가 없어요.<br>사냥하기에서 물건을 찍어 보세요! 📸</div>
+</main>
+
+<!-- ============ 복습 ============ -->
+<main id="quiz" class="view">
+  <div id="quizBox">
+    <div id="quizNeed">도감에 단어가 4개 이상 모이면 복습을 할 수 있어요.</div>
+    <div id="quizPlay" hidden>
+      <img id="quizImg" alt="">
+      <div id="quizQ">이 물건의 영어 이름은?</div>
+      <div id="quizOpts"></div>
+      <div id="quizMsg"></div>
+      <div id="quizScore"></div>
+    </div>
+  </div>
+</main>
+
+<div id="toast" hidden></div>
+<div id="confetti" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.1/dist/mobilenet.min.js"></script>
+<script src="dict.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

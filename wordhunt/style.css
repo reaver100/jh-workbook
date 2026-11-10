@@ -1,0 +1,194 @@
+:root{
+  --bg:#0f1024; --bg2:#1a1b38; --card:#23254a; --line:#34376b;
+  --txt:#f4f5ff; --dim:#a7abd8; --hi:#ffd166; --go:#4ade80; --no:#fb7185; --blu:#60a5fa;
+  --safe-b: env(safe-area-inset-bottom, 0px);
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+html,body{margin:0; height:100%; overflow:hidden}
+body{
+  background:var(--bg); color:var(--txt);
+  font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",
+    "Malgun Gothic",system-ui,sans-serif;
+  display:flex; flex-direction:column;
+  padding-top:env(safe-area-inset-top,0px);
+  user-select:none;
+}
+
+/* ---------- 헤더 ---------- */
+#top{
+  flex:0 0 auto; display:flex; align-items:center; justify-content:space-between;
+  padding:10px 14px 8px; background:linear-gradient(180deg,#171836,#0f1024);
+}
+.brand{font-size:17px; font-weight:800; letter-spacing:-.3px}
+.score{display:flex; align-items:center; gap:6px; background:var(--card);
+  border:1px solid var(--line); padding:5px 11px; border-radius:999px; font-weight:800}
+.score #count{color:var(--hi); font-size:16px}
+.score #count::after{content:"개"; font-size:11px; color:var(--dim); margin-left:1px; font-weight:600}
+.badge{font-size:15px}
+
+/* ---------- 탭 ---------- */
+#tabs{flex:0 0 auto; display:flex; gap:6px; padding:0 10px 8px}
+.tab{
+  flex:1; padding:10px 0; border:1px solid var(--line); background:var(--bg2);
+  color:var(--dim); font-size:14px; font-weight:700; border-radius:12px; font-family:inherit;
+}
+.tab.on{background:var(--hi); color:#2b2200; border-color:var(--hi)}
+
+.view{flex:1 1 auto; display:none; min-height:0; overflow:hidden; flex-direction:column}
+.view.on{display:flex}
+
+/* ---------- 카메라 ---------- */
+#stage{
+  position:relative; flex:1 1 auto; min-height:0; margin:0 10px;
+  border-radius:20px; overflow:hidden; background:#000; border:1px solid var(--line);
+}
+#cam{width:100%; height:100%; object-fit:cover; display:block}
+#frame{
+  position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  width:62vw; height:62vw; max-width:300px; max-height:300px;
+  border:3px dashed rgba(255,255,255,.55); border-radius:24px; pointer-events:none;
+}
+#hint{
+  position:absolute; left:0; right:0; bottom:10px; text-align:center;
+  font-size:12px; color:#fff; text-shadow:0 1px 4px #000; padding:0 16px; pointer-events:none;
+}
+#mission{
+  position:absolute; left:10px; top:10px; right:10px;
+  background:rgba(15,16,36,.62); backdrop-filter:blur(6px);
+  border:1px solid rgba(255,255,255,.14); border-radius:14px; padding:8px 10px;
+  pointer-events:none;
+}
+.mission-title{font-size:10px; color:var(--hi); font-weight:800; letter-spacing:.5px; margin-bottom:5px}
+.mission-list{display:flex; flex-wrap:wrap; gap:5px}
+.chip{
+  font-size:11px; font-weight:700; padding:4px 8px; border-radius:999px;
+  background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.18);
+}
+.chip.done{background:var(--go); color:#06290f; border-color:var(--go); text-decoration:line-through}
+.chip b{font-weight:800}
+.chip i{font-style:normal; opacity:.8; font-size:10px; margin-left:3px}
+
+#cover,#loading{
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(160deg,#1b1d42,#0f1024); text-align:center; padding:22px;
+}
+.cover-in{max-width:320px}
+.cover-emoji{font-size:54px; margin-bottom:6px}
+#cover h2{font-size:19px; margin:0 0 8px}
+#cover p{font-size:13px; color:var(--dim); line-height:1.6; margin:0 0 18px}
+.cover-note{font-size:11px; color:var(--no); margin-top:12px; min-height:16px}
+#loading{flex-direction:column; gap:14px; background:rgba(10,11,26,.88)}
+#loadingText{font-size:13px; color:var(--dim)}
+.spin{width:44px; height:44px; border:4px solid rgba(255,255,255,.16);
+  border-top-color:var(--hi); border-radius:50%; animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* ---------- 셔터 ---------- */
+#shutterRow{
+  flex:0 0 auto; display:flex; align-items:center; justify-content:center; gap:26px;
+  padding:14px 0 calc(12px + var(--safe-b));
+}
+.shutter{
+  width:76px; height:76px; border-radius:50%; background:var(--hi);
+  border:5px solid #fff2; display:grid; place-items:center; padding:0;
+}
+.shutter span{width:58px; height:58px; border-radius:50%; background:#fff; display:block}
+.shutter:active{transform:scale(.93)}
+.round{
+  width:48px; height:48px; border-radius:50%; background:var(--card);
+  border:1px solid var(--line); font-size:20px; color:var(--txt); padding:0;
+}
+.round.off{opacity:.4}
+
+button{cursor:pointer; font-family:inherit}
+.big{
+  background:var(--hi); color:#2b2200; border:0; border-radius:14px;
+  padding:14px 22px; font-size:16px; font-weight:800; width:100%;
+}
+.big:active{transform:scale(.97)}
+.ghost{
+  background:transparent; color:var(--txt); border:1px solid var(--line);
+  border-radius:14px; padding:14px 18px; font-size:15px; font-weight:700;
+}
+.ghost.small{padding:7px 13px; font-size:12px; border-radius:10px}
+
+/* ---------- 결과 카드 ---------- */
+#sheet{position:fixed; inset:0; z-index:40; background:rgba(5,6,16,.72);
+  display:flex; align-items:flex-end; backdrop-filter:blur(3px)}
+.sheet-in{
+  width:100%; background:var(--bg2); border-radius:24px 24px 0 0;
+  border-top:1px solid var(--line); padding:16px 16px calc(18px + var(--safe-b));
+  animation:up .22s ease-out; max-height:92%; overflow:auto;
+}
+@keyframes up{from{transform:translateY(40px); opacity:.4}}
+#sheetImg{
+  width:132px; height:132px; object-fit:cover; border-radius:18px;
+  display:block; margin:0 auto 12px; border:2px solid var(--line); background:#000;
+}
+#sheetEn{font-size:34px; font-weight:800; text-align:center; letter-spacing:-.5px; line-height:1.1}
+#sheetKo{font-size:19px; color:var(--hi); text-align:center; margin-top:4px; font-weight:700}
+#sheetSub{font-size:12px; color:var(--dim); text-align:center; margin-top:8px; min-height:16px}
+#alts{display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin-top:10px}
+.alt{font-size:12px; padding:6px 10px; border-radius:999px; background:var(--card);
+  border:1px solid var(--line); color:var(--dim); font-weight:600}
+.sheet-btns{display:flex; gap:10px; margin-top:16px}
+.sheet-btns .ghost{flex:0 0 38%}
+.sheet-btns .big{flex:1}
+
+/* ---------- 도감 ---------- */
+#bookTop{flex:0 0 auto; display:flex; align-items:center; gap:10px; padding:4px 14px 10px}
+.prog{flex:1}
+.prog-bar{height:9px; background:var(--card); border-radius:99px; overflow:hidden; border:1px solid var(--line)}
+#progFill{height:100%; width:0; background:linear-gradient(90deg,var(--go),var(--hi)); transition:width .4s}
+.prog-txt{font-size:11px; color:var(--dim); margin-top:5px; font-weight:600}
+#grid{
+  flex:1 1 auto; overflow-y:auto; display:grid; gap:9px;
+  grid-template-columns:repeat(auto-fill,minmax(104px,1fr));
+  padding:0 12px calc(20px + var(--safe-b));
+}
+.cell{
+  background:var(--card); border:1px solid var(--line); border-radius:15px;
+  overflow:hidden; position:relative; text-align:center; padding-bottom:8px;
+}
+.cell img{width:100%; aspect-ratio:1/1; object-fit:cover; display:block; background:#000}
+.cell .en{font-size:13px; font-weight:800; margin-top:6px; padding:0 4px;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.cell .ko{font-size:11px; color:var(--dim); padding:0 4px;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.cell:active{transform:scale(.97)}
+.cell .del{
+  position:absolute; right:5px; top:5px; width:26px; height:26px; border-radius:50%;
+  background:var(--no); color:#fff; border:0; font-size:15px; font-weight:800;
+  display:none; place-items:center; padding:0; line-height:1;
+}
+body.editing .cell .del{display:grid}
+#empty{padding:50px 24px; text-align:center; color:var(--dim); font-size:14px; line-height:1.8}
+
+/* ---------- 복습 ---------- */
+#quizBox{flex:1; overflow-y:auto; padding:6px 16px calc(24px + var(--safe-b)); text-align:center}
+#quizNeed{color:var(--dim); font-size:14px; padding:40px 10px; line-height:1.8}
+#quizImg{width:180px; height:180px; object-fit:cover; border-radius:20px;
+  border:2px solid var(--line); background:#000; margin:6px auto 14px; display:block}
+#quizQ{font-size:16px; font-weight:700; margin-bottom:14px}
+#quizOpts{display:grid; gap:9px}
+.opt{
+  background:var(--card); border:1px solid var(--line); color:var(--txt);
+  border-radius:14px; padding:15px; font-size:18px; font-weight:800;
+}
+.opt.ok{background:var(--go); color:#06290f; border-color:var(--go)}
+.opt.ng{background:var(--no); color:#3b0410; border-color:var(--no)}
+#quizMsg{min-height:26px; margin-top:14px; font-size:15px; font-weight:700}
+#quizScore{font-size:12px; color:var(--dim); margin-top:6px}
+
+/* ---------- 토스트 / 축하 ---------- */
+#toast{
+  position:fixed; left:50%; bottom:calc(96px + var(--safe-b)); transform:translateX(-50%);
+  background:#000c; color:#fff; padding:11px 18px; border-radius:999px; font-size:13px;
+  font-weight:700; z-index:60; border:1px solid #fff2; max-width:88%; text-align:center;
+}
+#confetti{position:fixed; inset:0; pointer-events:none; z-index:50; overflow:hidden}
+.conf{position:absolute; width:10px; height:14px; border-radius:2px; animation:fall linear forwards}
+@keyframes fall{
+  from{transform:translateY(-20px) rotate(0)}
+  to{transform:translateY(105vh) rotate(720deg); opacity:.2}
+}
