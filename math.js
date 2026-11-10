@@ -77,6 +77,10 @@
     return { type: 'choice', q: q, choices: opts, answer: opts.indexOf(a), explain: explain };
   }
 
+  /* 그림 붙이기 */
+  function withFig(q, fig) { if (fig) q.fig = fig; return q; }
+  const F = () => global.FIG || null;
+
   function inputQ(q, answers, explain, placeholder) {
     return {
       type: 'input',
@@ -95,6 +99,10 @@
       gen() {
         const n = R(1, 9);
         const k = R(1, 3);
+        if (F() && R(0, 2) === 0) {
+          const c = R(3, 9);
+          return withFig(inputQ('그림의 개수는 모두 몇 개인가요?', c, '하나씩 세어 보면 ' + c + '개입니다.', '개'), F().dots(c));
+        }
         if (R(0, 1)) {
           return inputQ(`${n}보다 ${k} 큰 수는 얼마인가요?`, n + k, `${n}에서 ${k}만큼 더 세면 ${n + k}입니다.`);
         }
@@ -161,6 +169,13 @@
       gen() {
         const h = R(1, 12);
         const half = R(0, 1);
+        if (F()) {
+          const mm = half ? 30 : 0;
+          const a2 = `${h}시 ${mm}분`.replace(' 0분', '');
+          const ds = [`${(h % 12) + 1}시${half ? ' 30분' : ''}`, `${((h + 10) % 12) + 1}시${half ? ' 30분' : ''}`, half ? `${h}시` : `${h}시 30분`];
+          return withFig(choiceQ('시계가 가리키는 시각은 몇 시인가요?', a2, ds,
+            '짧은바늘은 ' + h + ', 긴바늘은 ' + (half ? '6(30분)' : '12(정각)') + '을 가리킵니다.'), F().clock(h, mm));
+        }
         const ans = half ? `${h}시 30분` : `${h}시`;
         const d = [
           half ? `${h}시` : `${h}시 30분`,
@@ -269,7 +284,11 @@
       id: 'g2-len',
       name: '길이 재기 (cm, m)',
       gen() {
-        const mode = R(0, 2);
+        const mode = R(0, 3);
+        if (mode === 3 && F()) {
+          const cm = R(2, 9);
+          return withFig(inputQ('막대의 길이는 몇 cm인가요?', cm, '자의 0에서 시작해 ' + cm + '까지이므로 ' + cm + 'cm입니다.', 'cm'), F().ruler(cm));
+        }
         if (mode === 0) {
           const m = R(1, 9), c = R(1, 99);
           return inputQ(`${m}m ${c}cm는 몇 cm인가요?`, m * 100 + c, `1m는 100cm이므로 ${m}m는 ${m * 100}cm, 더하면 ${m * 100 + c}cm입니다.`, 'cm');
@@ -292,7 +311,13 @@
       id: 'g2-time',
       name: '시각과 시간',
       gen() {
-        const mode = R(0, 2);
+        const mode = R(0, 3);
+        if (mode === 3 && F()) {
+          const h = R(1, 12), mm = pick([5, 10, 15, 20, 25, 35, 40, 45, 50, 55]);
+          return withFig(choiceQ('시계가 가리키는 시각은?', `${h}시 ${mm}분`,
+            [`${h}시 ${(mm + 5) % 60}분`, `${(h % 12) + 1}시 ${mm}분`, `${h}시 ${(mm + 30) % 60}분`],
+            '긴바늘이 가리키는 숫자에 5를 곱하면 분입니다.'), F().clock(h, mm));
+        }
         if (mode === 0) {
           const h = R(1, 3), m = R(1, 59);
           return inputQ(`${h}시간 ${m}분은 몇 분인가요?`, h * 60 + m, `1시간은 60분이므로 ${h}시간은 ${h * 60}분, 더하면 ${h * 60 + m}분입니다.`, '분');
@@ -388,6 +413,13 @@
       name: '분수',
       gen() {
         const mode = R(0, 2);
+        if (mode === 0 && F()) {
+          const d = R(3, 8), n = R(1, d - 1);
+          const useCircle = R(0, 1) === 1;
+          return withFig(inputQ('색칠한 부분을 분수로 나타내면? (예: 2/5)', [`${n}/${d}`],
+            '전체를 ' + d + '로 나눈 것 중 ' + n + '칸이 색칠되어 있으므로 ' + n + '/' + d + '입니다.', '예: 2/5'),
+            useCircle ? F().fracCircle(d, n) : F().fracBar(d, n));
+        }
         if (mode === 0) {
           const d = R(3, 9), n = R(1, d - 1);
           return inputQ(`전체를 똑같이 ${d}로 나눈 것 중 ${n}만큼을 분수로 쓰면? (예: 2/5)`, [`${n}/${d}`], `분모는 ${d}, 분자는 ${n}이므로 ${n}/${d}입니다.`, '예: 2/5');
@@ -522,6 +554,12 @@
         }
         const ang = R(10, 170);
         const kind = ang < 90 ? '예각' : ang === 90 ? '직각' : '둔각';
+        if (F()) {
+          const a2 = pick([30, 45, 60, 90, 120, 135, 150]);
+          const k2 = a2 < 90 ? '예각' : a2 === 90 ? '직각' : '둔각';
+          return withFig(choiceQ('그림의 각은 어떤 각인가요?', k2, ['예각', '직각', '둔각'].filter((k) => k !== k2),
+            '90°보다 작으면 예각, 90°이면 직각, 90°보다 크고 180°보다 작으면 둔각입니다.'), F().angle(a2));
+        }
         return choiceQ(`${ang}°는 어떤 각인가요?`, kind, ['예각', '직각', '둔각'].filter((k) => k !== kind), `0°보다 크고 90°보다 작으면 예각, 90°보다 크고 180°보다 작으면 둔각입니다.`);
       }
     },
@@ -568,6 +606,12 @@
           { q: '정삼각형의 한 각의 크기는?', a: '60°', d: ['90°', '45°', '30°'], e: '180 ÷ 3 = 60°입니다.' },
           { q: '이등변삼각형에서 길이가 같은 두 변 사이가 아닌 두 각은?', a: '크기가 서로 같다', d: ['크기가 서로 다르다', '항상 직각이다', '항상 60°이다'], e: '이등변삼각형의 두 밑각은 크기가 같습니다.' }
         ];
+        if (F() && R(0, 1) === 0) {
+          const names = F().shapeNames();
+          const nm = pick(names);
+          const ds = shuf(names.filter((x) => x !== nm)).slice(0, 3);
+          return withFig(choiceQ('그림에서 알맞은 도형의 이름은?', nm, ds, nm + '의 모양입니다.'), F().shape(nm));
+        }
         const it = pick(items);
         return choiceQ(it.q, it.a, it.d, it.e);
       }
@@ -745,7 +789,7 @@
         const mode = R(0, 4);
         if (mode === 0) {
           const a = R(3, 20), b = R(3, 20);
-          return inputQ(`가로 ${a}cm, 세로 ${b}cm인 직사각형의 넓이는 몇 cm²인가요?`, a * b, `직사각형의 넓이 = 가로 × 세로 = ${a} × ${b} = ${a * b}`, 'cm²');
+          return withFig(inputQ(`직사각형의 넓이는 몇 cm²인가요?`, a * b, `넓이 = 가로 × 세로 = ${a} × ${b} = ${a * b}`, 'cm²'), F() && F().rectDim(a, b));
         }
         if (mode === 1) {
           const a = R(3, 20), b = R(3, 20);
@@ -753,15 +797,15 @@
         }
         if (mode === 2) {
           const b = R(3, 20), h = R(2, 10) * 2;
-          return inputQ(`밑변이 ${b}cm, 높이가 ${h}cm인 삼각형의 넓이는 몇 cm²인가요?`, (b * h) / 2, `삼각형의 넓이 = 밑변 × 높이 ÷ 2 = ${b} × ${h} ÷ 2 = ${(b * h) / 2}`, 'cm²');
+          return withFig(inputQ(`삼각형의 넓이는 몇 cm²인가요?`, (b * h) / 2, `삼각형의 넓이 = 밑변 × 높이 ÷ 2 = ${b} × ${h} ÷ 2 = ${(b * h) / 2}`, 'cm²'), F() && F().triDim(b, h));
         }
         if (mode === 3) {
           const b = R(3, 20), h = R(3, 15);
-          return inputQ(`밑변이 ${b}cm, 높이가 ${h}cm인 평행사변형의 넓이는 몇 cm²인가요?`, b * h, `평행사변형의 넓이 = 밑변 × 높이 = ${b * h}`, 'cm²');
+          return withFig(inputQ(`평행사변형의 넓이는 몇 cm²인가요?`, b * h, `평행사변형의 넓이 = 밑변 × 높이 = ${b} × ${h} = ${b * h}`, 'cm²'), F() && F().paraDim(b, h));
         }
         const a = R(3, 12), b = R(3, 12), h = R(2, 8) * 2;
-        return inputQ(`윗변 ${a}cm, 아랫변 ${b}cm, 높이 ${h}cm인 사다리꼴의 넓이는 몇 cm²인가요?`, ((a + b) * h) / 2,
-          `사다리꼴의 넓이 = (윗변 + 아랫변) × 높이 ÷ 2 = (${a} + ${b}) × ${h} ÷ 2 = ${((a + b) * h) / 2}`, 'cm²');
+        return withFig(inputQ(`사다리꼴의 넓이는 몇 cm²인가요?`, ((a + b) * h) / 2,
+          `사다리꼴의 넓이 = (윗변 + 아랫변) × 높이 ÷ 2 = (${a} + ${b}) × ${h} ÷ 2 = ${((a + b) * h) / 2}`, 'cm²'), F() && F().trapDim(a, b, h));
       }
     },
     {
@@ -871,12 +915,12 @@
         const r = R(2, 15);
         const mode = R(0, 2);
         if (mode === 0) {
-          return inputQ(`반지름이 ${r}cm인 원의 둘레는 몇 cm인가요? (원주율 3.14)`, [fmt(Math.round(2 * r * 3.14 * 100) / 100)],
-            `원주 = 지름 × 3.14 = ${2 * r} × 3.14 = ${fmt(Math.round(2 * r * 3.14 * 100) / 100)}cm`, 'cm');
+          return withFig(inputQ(`원의 둘레는 몇 cm인가요? (원주율 3.14)`, [fmt(Math.round(2 * r * 3.14 * 100) / 100)],
+            `원주 = 지름 × 3.14 = ${2 * r} × 3.14 = ${fmt(Math.round(2 * r * 3.14 * 100) / 100)}cm`, 'cm'), F() && F().circleFig(r, 'r'));
         }
         if (mode === 1) {
-          return inputQ(`반지름이 ${r}cm인 원의 넓이는 몇 cm²인가요? (원주율 3.14)`, [fmt(Math.round(r * r * 3.14 * 100) / 100)],
-            `원의 넓이 = 반지름 × 반지름 × 3.14 = ${r} × ${r} × 3.14 = ${fmt(Math.round(r * r * 3.14 * 100) / 100)}cm²`, 'cm²');
+          return withFig(inputQ(`원의 넓이는 몇 cm²인가요? (원주율 3.14)`, [fmt(Math.round(r * r * 3.14 * 100) / 100)],
+            `원의 넓이 = 반지름 × 반지름 × 3.14 = ${r} × ${r} × 3.14 = ${fmt(Math.round(r * r * 3.14 * 100) / 100)}cm²`, 'cm²'), F() && F().circleFig(r, 'r'));
         }
         const d = r * 2;
         return inputQ(`원의 둘레가 ${fmt(Math.round(d * 3.14 * 100) / 100)}cm일 때 지름은 몇 cm인가요? (원주율 3.14)`, d,
@@ -890,13 +934,13 @@
         const a = R(2, 12), b = R(2, 12), c = R(2, 12);
         const mode = R(0, 2);
         if (mode === 0) {
-          return inputQ(`가로 ${a}cm, 세로 ${b}cm, 높이 ${c}cm인 직육면체의 부피는 몇 cm³인가요?`, a * b * c,
-            `부피 = 가로 × 세로 × 높이 = ${a} × ${b} × ${c} = ${a * b * c}`, 'cm³');
+          return withFig(inputQ(`직육면체의 부피는 몇 cm³인가요?`, a * b * c,
+            `부피 = 가로 × 세로 × 높이 = ${a} × ${b} × ${c} = ${a * b * c}`, 'cm³'), F() && F().boxFig(a, b, c));
         }
         if (mode === 1) {
           const s = 2 * (a * b + b * c + a * c);
-          return inputQ(`가로 ${a}cm, 세로 ${b}cm, 높이 ${c}cm인 직육면체의 겉넓이는 몇 cm²인가요?`, s,
-            `겉넓이 = (${a}×${b} + ${b}×${c} + ${a}×${c}) × 2 = ${s}`, 'cm²');
+          return withFig(inputQ(`직육면체의 겉넓이는 몇 cm²인가요?`, s,
+            `겉넓이 = (${a}×${b} + ${b}×${c} + ${a}×${c}) × 2 = ${s}`, 'cm²'), F() && F().boxFig(a, b, c));
         }
         return inputQ(`한 모서리가 ${a}cm인 정육면체의 부피는 몇 cm³인가요?`, a * a * a,
           `${a} × ${a} × ${a} = ${a * a * a}`, 'cm³');

@@ -136,7 +136,7 @@
   }
   function fromBank(it, grade, subject) {
     const base = {
-      subject: subject, grade: grade, unitName: it.u, explain: it.e,
+      subject: subject, grade: grade, unitName: it.u, explain: it.e, fig: it.i || null,
       key: subject + '|' + grade + '|' + bankSig(it)
     };
     if (it.t === 'input') {
@@ -408,6 +408,9 @@
     $('bar').style.width = Math.round((run.i / run.qs.length) * 100) + '%';
     $('qmeta').textContent = (run.i + 1) + ' / ' + run.qs.length + ' · ' + (q.unitName || SUBJ[q.subject].name);
     $('qtext').textContent = q.q;
+    const fig = $('qfig');
+    if (q.fig) { fig.innerHTML = q.fig; fig.hidden = false; }
+    else { fig.innerHTML = ''; fig.hidden = true; }
     $('verdict').hidden = true;
     $('nextBtn').hidden = true;
     const opts = $('opts');
@@ -477,7 +480,7 @@
     } else if (i < 0) {
       d.wrong.unshift({
         k: q.key, s: q.subject, g: q.grade, u: q.unitName || '', t: q.type,
-        q: q.q, c: q.choices || null, a: q.answer != null ? q.answer : null,
+        q: q.q, f: q.fig || null, c: q.choices || null, a: q.answer != null ? q.answer : null,
         ans: q.answers || null, e: q.explain || '', p: q.placeholder || '답', ts: Date.now()
       });
       if (d.wrong.length > 300) d.wrong.length = 300;
@@ -583,7 +586,7 @@
     });
   }
   function wrongToQuestion(w) {
-    const base = { subject: w.s, grade: w.g, unitName: w.u, explain: w.e, key: w.k, placeholder: w.p || '답' };
+    const base = { subject: w.s, grade: w.g, unitName: w.u, explain: w.e, key: w.k, fig: w.f || null, placeholder: w.p || '답' };
     if (w.t === 'input') return Object.assign(base, { type: 'input', q: w.q, answers: w.ans || [''] });
     const correct = w.c[w.a];
     const opts = shuffle(w.c);

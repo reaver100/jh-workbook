@@ -138,6 +138,9 @@ button { font-family: inherit; cursor: pointer; }
 /* hidden 속성이 항상 먹히도록 (객관식에서 입력칸·다음 버튼 숨김) */
 [hidden] { display: none !important; }
 
+.qfig { margin: 14px 0 4px; text-align: center; color: var(--ink); }
+.qfig svg { width: 100%; max-width: 300px; height: auto; }
+
 /* ---------- 단원 ---------- */
 .units { display: grid; gap: 8px; }
 .unit {
