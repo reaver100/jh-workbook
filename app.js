@@ -490,7 +490,8 @@
     const q = run.qs[run.i];
     run.locked = false;
     $('bar').style.width = Math.round((run.i / run.qs.length) * 100) + '%';
-    $('qmeta').textContent = (run.i + 1) + ' / ' + run.qs.length + ' · ' + (q.unitName || SUBJ[q.subject].name);
+    const uname = (q.unitName || '').replace('의 나라 · 국기 · 수도', '');
+    $('qmeta').textContent = (run.i + 1) + ' / ' + run.qs.length + ' · ' + (uname || SUBJ[q.subject].name);
     $('qtext').textContent = q.q;
     const fig = $('qfig');
     if (q.fig) { fig.innerHTML = q.fig; fig.hidden = false; }
