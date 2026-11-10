@@ -988,8 +988,11 @@
       while (out.length < n && guard++ < n * 40) {
         const u = use[out.length % use.length] || pick(use);
         const q = u.gen();
-        if (seen.has(q.q)) continue;
-        seen.add(q.q);
+        /* 같은 문제인지 판단할 때 그림과 정답까지 본다 — 문구가 같아도 그림이 다르면 다른 문제 */
+        const sig = q.q + '|' + (q.fig || '') + '|' +
+          (q.type === 'choice' ? q.choices[q.answer] : (q.answers || []).join(','));
+        if (seen.has(sig)) continue;
+        seen.add(sig);
         q.unitId = u.id;
         q.unitName = u.name;
         q.subject = 'math';
