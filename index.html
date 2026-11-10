@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<!-- This site is hosted on Netlify. Anyone can build and deploy a site
+     like this one for free: https://netlify.new/?utm_campaign=loops&utm_source=ai-legible&utm_medium=owned&utm_content=comment&utm_id=05bd4699-0e0f-40ec-b79b-9fb9aacb992b
+     Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>우리집 문제집</title>
+<meta name="theme-color" content="#4f6ef7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="우리집 문제집">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<link rel="stylesheet" href="style.css?v=8">
+</head>
+<body>
+
+<header class="topbar" id="topbar">
+  <div class="wrap">
+    <button class="iconbtn" id="backBtn" hidden aria-label="뒤로">←</button>
+    <h1 id="title">우리집 문제집</h1>
+    <span class="sub" id="who"></span>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- 프로필 선택 -->
+  <section class="screen on" id="sc-profile">
+    <div class="hello">
+      <h2>누가 공부할까요?</h2>
+      <p>이름을 고르면 그 사람 기록에 쌓입니다.</p>
+    </div>
+    <div class="plist" id="profileList"></div>
+    <button class="btn ghost" id="addProfileBtn">+ 새로 만들기</button>
+  </section>
+
+  <!-- 프로필 만들기/수정 -->
+  <section class="screen" id="sc-edit">
+    <div class="card">
+      <h2 id="editTitle">새 프로필</h2>
+      <div class="field">
+        <label>이름</label>
+        <input id="pName" type="text" placeholder="예: 서연" maxlength="10" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>학년</label>
+        <div class="chips" id="gradeChips"></div>
+      </div>
+      <div class="field">
+        <label>캐릭터</label>
+        <div class="chips" id="emojiChips"></div>
+      </div>
+      <button class="btn" id="saveProfileBtn">저장</button>
+      <button class="btn warn" id="delProfileBtn" hidden>이 프로필 삭제</button>
+    </div>
+  </section>
+
+  <!-- 홈 -->
+  <section class="screen" id="sc-home">
+    <div class="hello">
+      <h2 id="homeHi">안녕!</h2>
+      <p id="homeSub"></p>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><b id="kToday">0</b><span>오늘 푼 문제</span></div>
+      <div class="kpi"><b id="kStreak">0</b><span>연속 학습일</span></div>
+      <div class="kpi"><b id="kRate">—</b><span>전체 정답률</span></div>
+    </div>
+    <div class="subjects">
+      <button class="sub" data-s="korean"><span class="ico">📖</span><b>국어</b><small id="pKorean">시작하기</small></button>
+      <button class="sub" data-s="english"><span class="ico">🔤</span><b>영어</b><small id="pEnglish">시작하기</small></button>
+      <button class="sub" data-s="math"><span class="ico">➗</span><b>수학</b><small id="pMath">시작하기</small></button>
+      <button class="sub" data-s="science"><span class="ico">🔬</span><b>과학</b><small id="pScience">시작하기</small></button>
+      <button class="sub" data-s="social"><span class="ico">🌍</span><b>국가 및 수도</b><small id="pSocial">국기 · 수도 · 대륙</small></button>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <h2>이어서 풀기</h2>
+      <p class="muted" id="resumeMsg">오답노트에 모인 문제를 다시 풀면 기억에 더 오래 남습니다.</p>
+      <button class="btn ghost sm" id="goWrongBtn">오답노트 열기</button>
+    </div>
+  </section>
+
+  <!-- 문제 수 고르기 -->
+  <section class="screen" id="sc-setup">
+    <div class="card">
+      <h2 id="setupTitle">과목</h2>
+      <p class="muted" id="setupHint"></p>
+      <div class="progress" style="margin-top:12px"><i id="setupBar" style="width:0%"></i></div>
+      <p class="muted" id="setupProg" style="margin-top:8px"></p>
+    </div>
+    <div class="card">
+      <h2>몇 문제 풀까요?</h2>
+      <div class="chips" id="countChips"></div>
+    </div>
+    <button class="btn" id="startBtn">시작하기</button>
+  </section>
+
+  <!-- 문제 풀이 -->
+  <section class="screen" id="sc-quiz">
+    <div class="progress"><i id="bar" style="width:0%"></i></div>
+    <div class="qmeta" id="qmeta"></div>
+    <p class="qtext" id="qtext"></p>
+    <div class="opts" id="opts"></div>
+    <div class="answerbox" id="answerbox" hidden>
+      <input id="answerInput" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="답">
+      <button id="submitBtn">확인</button>
+    </div>
+    <div class="verdict" id="verdict" hidden></div>
+    <button class="btn" id="nextBtn" hidden>다음 문제</button>
+  </section>
+
+  <!-- 결과 -->
+  <section class="screen" id="sc-result">
+    <div class="card">
+      <div class="score">
+        <div class="emo" id="rEmo">🎉</div>
+        <div class="big" id="rScore">0</div>
+        <div class="of" id="rOf"></div>
+        <div class="msg" id="rMsg"></div>
+        <p class="muted" id="rNext" hidden style="margin-top:10px"></p>
+      </div>
+    </div>
+    <div class="card" id="rWrongCard" hidden>
+      <h2>틀린 문제</h2>
+      <div class="wronglist" id="rWrongList"></div>
+    </div>
+    <button class="btn" id="againBtn">다음 단계 이어서 풀기</button>
+    <button class="btn ghost" id="retryWrongBtn" hidden>틀린 문제만 다시 풀기</button>
+    <button class="btn ghost" id="homeBtn">홈으로</button>
+  </section>
+
+  <!-- 오답노트 -->
+  <section class="screen" id="sc-wrong">
+    <div class="card">
+      <h2>오답노트</h2>
+      <p class="muted" id="wrongHint"></p>
+      <div class="chips" id="wrongFilter" style="margin-top:10px"></div>
+      <button class="btn sm" id="wrongStartBtn">모아서 다시 풀기</button>
+    </div>
+    <div class="wronglist" id="wrongList"></div>
+    <div class="empty" id="wrongEmpty" hidden><span class="e">🗒️</span>아직 틀린 문제가 없습니다.<br>문제를 풀면 여기에 모입니다.</div>
+  </section>
+
+  <!-- 기록 -->
+  <section class="screen" id="sc-stats">
+    <div class="card">
+      <h2>과목별 정답률</h2>
+      <div class="bars" id="rateBars"></div>
+    </div>
+    <div class="card">
+      <h2>모은 배지</h2>
+      <div class="badges" id="badgeList"></div>
+    </div>
+    <div class="card">
+      <h2>최근 기록</h2>
+      <div class="loglist" id="logList"></div>
+      <div class="empty" id="logEmpty" hidden><span class="e">📈</span>아직 기록이 없습니다.</div>
+    </div>
+  </section>
+
+  <!-- 설정 -->
+  <section class="screen" id="sc-settings">
+    <div class="card">
+      <h2>프로필</h2>
+      <div class="plist" id="settingsProfiles"></div>
+      <button class="btn ghost sm" id="addProfileBtn2">+ 새 프로필 만들기</button>
+      <button class="btn ghost sm" id="switchBtn">다른 사람으로 바꾸기</button>
+    </div>
+    <div class="card">
+      <h2>기록 저장</h2>
+      <p class="muted">기록은 이 폰 안에만 저장됩니다. 폰을 바꾸거나 브라우저 데이터를 지우기 전에 백업 파일을 내보내 두면 그대로 복원할 수 있습니다.</p>
+      <button class="btn ghost sm" id="exportBtn">백업 파일 내보내기</button>
+      <button class="btn ghost sm" id="importBtn">백업 파일 불러오기</button>
+      <input type="file" id="importFile" accept="application/json,.json" hidden>
+    </div>
+    <div class="card">
+      <h2>정리하기</h2>
+      <button class="btn warn" id="clearWrongBtn">오답노트 비우기</button>
+      <button class="btn warn" id="resetBtn">이 프로필 기록 모두 지우기</button>
+    </div>
+    <p class="muted" style="text-align:center">우리집 문제집 · v1.0</p>
+  </section>
+
+</main>
+
+<nav class="nav" id="nav">
+  <div class="wrap">
+    <button data-go="home" class="on"><span class="i">🏠</span>홈</button>
+    <button data-go="wrong"><span class="i">🗒️</span>오답노트</button>
+    <button data-go="stats"><span class="i">📈</span>기록</button>
+    <button data-go="settings"><span class="i">⚙️</span>설정</button>
+  </div>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script src="math.js?v=8"></script>
+<script src="bank-main.js?v=8"></script>
+<script src="bank-extra.js?v=8"></script>
+<script src="bank-g1.js?v=8"></script>
+<script src="bank-g2.js?v=8"></script>
+<script src="bank-g3.js?v=8"></script>
+<script src="bank-g4.js?v=8"></script>
+<script src="bank-g5.js?v=8"></script>
+<script src="bank-g6.js?v=8"></script>
+<script src="bank-x1.js?v=8"></script>
+<script src="bank-x2.js?v=8"></script>
+<script src="bank-x3.js?v=8"></script>
+<script src="bank-x4.js?v=8"></script>
+<script src="bank-x5.js?v=8"></script>
+<script src="bank-x6.js?v=8"></script>
+<script src="bank-social.js?v=8"></script>
+<script src="app.js?v=8"></script>
+</body>
+</html>
