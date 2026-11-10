@@ -138,6 +138,10 @@ button { font-family: inherit; cursor: pointer; }
 /* hidden 속성이 항상 먹히도록 (객관식에서 입력칸·다음 버튼 숨김) */
 [hidden] { display: none !important; }
 
+/* 오른쪽 위 이름표 — 누르면 프로필 바꾸기 */
+#who { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+#who:active { transform: scale(.96); opacity: .8; }
+
 .qfig { margin: 14px 0 4px; text-align: center; color: var(--ink); }
 .qfig svg { width: 100%; max-width: 300px; height: auto; }
 

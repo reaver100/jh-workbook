@@ -778,6 +778,11 @@
     $('addProfileBtn').onclick = () => openEdit(null);
     $('addProfileBtn2').onclick = () => openEdit(null);
     $('switchBtn').onclick = () => { stack = []; show('profile'); renderProfiles(); };
+    /* 오른쪽 위 이름표를 누르면 다른 프로필로 바꾸기 */
+    $('who').onclick = () => {
+      if (!S.profiles || S.profiles.length === 0) return;
+      stack = []; show('profile'); renderProfiles();
+    };
 
     $('saveProfileBtn').onclick = () => {
       const nm = $('pName').value.trim();
