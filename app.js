@@ -90,7 +90,7 @@
     document.querySelectorAll('.nav button').forEach((b) => b.classList.toggle('on', b.dataset.go === name));
     $('backBtn').hidden = ['home', 'profile', 'wrong', 'stats', 'settings'].indexOf(name) >= 0;
     const titles = {
-      profile: '우리집 문제집', edit: '프로필', home: '우리집 문제집', setup: '문제 수 고르기',
+      profile: '우리집 문제집', edit: '프로필', home: '우리집 문제집', setup: '단원 고르기',
       quiz: '문제 풀기', result: '결과', wrong: '오답노트', stats: '기록', settings: '설정'
     };
     $('title').textContent = titles[name] || '우리집 문제집';
