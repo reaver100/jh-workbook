@@ -1,3 +1,5 @@
+/* 설치된 앱에 남아 있는 세로 고정을 푼다 (테블릿 가로모드) */
+try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch (e) {}
 /* 우리집 문제집 — 앱 본체 */
 (function () {
   'use strict';
