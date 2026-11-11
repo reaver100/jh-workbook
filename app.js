@@ -1,3 +1,9 @@
+/* 버전 / 빌드 시각 — 업데이트 반영 확인용 */
+var APPV = "20", BUILT = "2026-11-11 10:18";
+document.addEventListener("DOMContentLoaded", function () {
+  var el = document.getElementById("ver");
+  if (el) el.textContent = "우리집 문제집 · 버전 " + APPV + " · " + BUILT;
+});
 /* 설치된 앱에 남아 있는 세로 고정을 푼다 (테블릿 가로모드) */
 try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch (e) {}
 /* 우리집 문제집 — 앱 본체 */
