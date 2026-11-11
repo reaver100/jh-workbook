@@ -270,3 +270,14 @@ button { font-family: inherit; cursor: pointer; }
   .verdict.ok { color: #7ee2b0; }
   .verdict.no { color: #ff9b9e; }
 }
+
+
+/* ===== 테블릿 가로모드 ===== */
+@media (min-width: 820px) {
+  .wrap { max-width: 760px; }
+  .subjects { grid-template-columns: repeat(3, 1fr); }
+  .qfig svg { max-width: 360px; }
+}
+@media (orientation: landscape) and (max-height: 560px) {
+  .qfig svg { max-width: 220px; }
+}
